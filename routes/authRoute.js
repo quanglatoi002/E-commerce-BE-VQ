@@ -19,6 +19,8 @@ router.post("/cart/cash-order", [authMiddleware], ctrlc.createOrder);
 router.post("/cart", [authMiddleware], ctrlc.userCart);
 router.get("/all-users", ctrlc.getallUser);
 router.get("/get-orders", [authMiddleware], ctrlc.getOrders);
+router.get("/getall-orders", [authMiddleware, isAdmin], ctrlc.getAllOrders);
+
 router.get("/refresh", ctrlc.handleRefreshToken);
 router.get("/logout", [authMiddleware], ctrlc.logout);
 router.get("/wishlist", [authMiddleware], ctrlc.getWishlist);
@@ -28,6 +30,7 @@ router.put("/save-address", [authMiddleware], ctrlc.saveAddress);
 router.put("/edit-user", [authMiddleware], ctrlc.updateaUser);
 
 router.get("/:id", [authMiddleware, isAdmin], ctrlc.getaUser);
+router.post("/getorderbyuser/:id", ctrlc.getOrderByUserId);
 router.delete("/:id", ctrlc.deleteaUser);
 
 router.put("/block-user/:id", [authMiddleware, isAdmin], ctrlc.blockUser);

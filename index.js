@@ -1,7 +1,9 @@
 const express = require("express");
+const cors = require("cors");
 const dbConnect = require("./config/dbConnect");
 const app = express();
 const dotenv = require("dotenv").config();
+app.use(cors());
 
 const PORT = process.env.PORT || 4000;
 const authRouter = require("./routes/authRoute");
@@ -13,6 +15,7 @@ const blogCategoryRouter = require("./routes/blogCategoryRoute");
 const brandRouter = require("./routes/brandRoute");
 const colorRouter = require("./routes/colorRoute");
 const enquiryRouter = require("./routes/enqRoute");
+const updateRouter = require("./routes/uploadRoute");
 
 const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
@@ -34,6 +37,7 @@ app.use("/api/brand", brandRouter);
 app.use("/api/coupon", couponRouter);
 app.use("/api/color", colorRouter);
 app.use("/api/enquiry", enquiryRouter);
+app.use("/api/upload", updateRouter);
 app.use(notFound);
 app.use(errorHandler);
 app.listen(PORT, () => {

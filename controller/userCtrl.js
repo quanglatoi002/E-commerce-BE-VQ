@@ -325,31 +325,39 @@ const getWishlist = asyncHandler(async (req, res) => {
 
 const userCart = asyncHandler(async (req, res) => {
     const { _id } = req.user;
+    //cart nhận giá trị là []
     const { cart } = req.body;
     validateMongoDbId(_id);
     try {
         let products = [];
+        //lấy info người dùng
         const user = await User.findById(_id);
-        //kiểm tra xem ng đã có product in cart ko?
-        const alreadyExistsCart = await Cart.findOne({ orderBy: user?._id });
-        if (alreadyExistsCart) {
-            alreadyExistsCart.remove();
-        }
+        //kiểm tra xem ng đã có đặt hàng ch?
+        const alreadyExistsCart = await Cart.findOneAndRemove({
+            orderBy: user?._id,
+        });
+        // ngược lại thì thêm vào giỏ hàng
+        //cart lúc này có kiểu 1 mảng các object
         for (let i = 0; i < cart.length; i++) {
             let object = {};
             object.product = cart[i]._id;
             object.count = cart[i].count;
             object.color = cart[i].color;
+            //dựa vào id của sản phẩm mà ta tìm ra price
             let getPrice = await Product.findById({ _id: cart[i]._id })
                 .select("price")
                 .exec();
             object.price = getPrice?.price;
+            //sau khi có được giá thì sẽ push vào products
             products.push(object);
         }
+        // ở products sau khi có được giá ở từng sản phẩm thì ta bd tính tổng các sản phẩm đã có trong giỏ hàng
         let carTotal = 0;
+        // giá của từng phần tử * với số lượng của từng phần tử
         for (let i = 0; i < products.length; i++) {
             carTotal += products[i].price * products[i].count;
         }
+        // sau khi đã có đủ các thành phần cần thiết cho Cart
         let newCart = await new Cart({
             products,
             cartTotal: carTotal,
@@ -362,6 +370,7 @@ const userCart = asyncHandler(async (req, res) => {
     }
 });
 
+// lấy thông tin người dùng đã đặt hàng
 const getUserCart = asyncHandler(async (req, res) => {
     const { _id } = req.user;
     validateMongoDbId(_id);
@@ -375,34 +384,40 @@ const getUserCart = asyncHandler(async (req, res) => {
     }
 });
 
+//remove Cart
 const emptyCart = asyncHandler(async (req, res) => {
     const { _id } = req.user;
     validateMongoDbId(_id);
     try {
-        const user = await User.findOne(_id);
-        const cart = await Cart.findOneAndRemove({ orderBy: user?._id });
+        // const user = await User.findOne(_id);
+        const cart = await Cart.findOneAndRemove({ orderBy: _id });
         res.json(cart);
     } catch (error) {
         throw new Error(error);
     }
 });
 
+//áp dụng Coupon
 const applyCoupon = asyncHandler(async (req, res) => {
     const { _id } = req.user;
     validateMongoDbId(_id);
     const { coupon } = req.body;
     try {
+        //tìm kiếm xem user có phiếu bán hàng ko?
         const validCoupon = await Coupon.findOne({ name: coupon });
         if (validCoupon === null) throw new Error("Coupon not found");
         const user = await User.findOne(_id);
+        //lấy info giỏ hàng và info product đã thêm vào giỏ hàng
         let { cartTotal } = await Cart.findOne({
             orderBy: user._id,
         }).populate("products.product");
-        // giá tiền được giảm khi áp dụng discount
+        // giá tiền sau khi áp dụng discount
+        // tổng - (tổng * phiếu giảm) / 100 và làm tròn sau dấu . 2 số
         let totalAfterDiscount = (
             cartTotal -
             (cartTotal * validCoupon.discount) / 100
         ).toFixed(2);
+        // cập nhật totalAfterDiscount vào Cart
         await Cart.findOneAndUpdate({ orderBy: user._id }, totalAfterDiscount, {
             new: true,
         });
@@ -412,7 +427,9 @@ const applyCoupon = asyncHandler(async (req, res) => {
     }
 });
 
+//Sau khi đã thêm vào giỏ hàng và áp dụng phiếu mua hàng thì sẽ đến bước đặt hàng(order)
 const createOrder = asyncHandler(async (req, res) => {
+    // xác định phương thức đặt hàng và đã áp dụng giảm giá
     const { COD, couponApplied } = req.body;
     const { _id } = req.user;
     validateMongoDbId(_id);
@@ -420,13 +437,16 @@ const createOrder = asyncHandler(async (req, res) => {
         if (!COD) throw new Error("Create cash order failed");
         const user = await User.findById(_id);
         let userCart = await Cart.findOne({ orderBy: user._id });
+        // số tiền cuối cùng mà user phải trả
         let finalAmount = 0;
+        //nếu đã áp dụng phiếu mua hàng thì lấy totalAfterDiscount ở Cart và gán vào finalAmount
         if (couponApplied && userCart?.totalAfterDiscount) {
             finalAmount = userCart.totalAfterDiscount;
         } else {
+            //nếu như ko áp dụng thì chỉ lấy cartTotal
             finalAmount = userCart.cartTotal;
         }
-
+        //cập nhật lên Order
         let newOrder = await new Order({
             products: userCart.products,
             paymentIntent: {
@@ -440,6 +460,7 @@ const createOrder = asyncHandler(async (req, res) => {
             orderBy: user._id,
             orderStatus: "Cash on Delivery",
         }).save();
+        //sau khi đã đặt hàng thì phải cập nhật lại số lượng của sản phẩm
         let update = userCart?.products.map((item) => {
             return {
                 updateOne: {
@@ -450,8 +471,9 @@ const createOrder = asyncHandler(async (req, res) => {
                 },
             };
         });
-        const updated = await Product.bulkWrite(update, {});
-        res.json({ message: "success" });
+        // sử dụng bulkWrite cập nhật đồng loạt nhiều thay đổi trong cùng 1 lúc.
+        const updated = await Product.bulkWrite(update);
+        res.json({ message: "success", updated });
     } catch (error) {
         throw new Error(error);
     }
@@ -463,6 +485,7 @@ const getOrders = asyncHandler(async (req, res) => {
     try {
         const userOrders = await Order.findOne({ orderBy: _id })
             .populate("products.product")
+            .populate("orderBy")
             .exec();
         res.json(userOrders);
     } catch (error) {
@@ -470,10 +493,47 @@ const getOrders = asyncHandler(async (req, res) => {
     }
 });
 
+const getAllOrders = asyncHandler(async (req, res) => {
+    try {
+        const userALLOrders = await Order.find()
+            .populate("products.product")
+            .populate("orderBy")
+            .exec();
+        res.json(userALLOrders);
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+const getOrderByUserId = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    validateMongoDbId(id);
+    try {
+        const userOrders = await Order.findOne({ orderBy: id })
+            .populate("products.product")
+            .populate("orderBy")
+            .exec();
+        res.json(userOrders);
+        console.log(userOrders);
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+//update lại trạng thái khi ng dùng nhận hàng...
 const updateOrderStatus = asyncHandler(async (req, res) => {
     const { status } = req.body;
     const { id } = req.params;
     validateMongoDbId(id);
+    const validStatusValues = [
+        "Not Processed",
+        "Cash on Delivery",
+        "Processing",
+        "Dispatched",
+        "Cancelled",
+        "Delivered",
+    ];
+    if (!validStatusValues.includes(status))
+        throw new Error("Invalid order status");
     try {
         const updateOrderStatus = await Order.findByIdAndUpdate(
             id,
@@ -515,4 +575,6 @@ module.exports = {
     createOrder,
     getOrders,
     updateOrderStatus,
+    getAllOrders,
+    getOrderByUserId,
 };
