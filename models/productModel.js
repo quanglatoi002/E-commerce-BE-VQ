@@ -33,15 +33,22 @@ var productSchema = new mongoose.Schema(
         quantity: {
             type: Number,
             required: true,
-            select: false,
         },
         sold: {
             type: Number,
             default: 0,
         },
         images: [{ public_id: String, url: String }],
-        tags: [],
-        color: [],
+        tags: {
+            type: String,
+            required: true,
+        },
+        color: [
+            {
+                type: mongoose.Types.ObjectId,
+                ref: "Color",
+            },
+        ],
         ratings: [
             {
                 star: Number,

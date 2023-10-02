@@ -53,14 +53,20 @@ var userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
+    // if no input password
     if (!this.isModified("password")) {
         next();
     }
+    //create salt
     const salt = await bcrypt.genSaltSync(10);
+    //hash password
     this.password = await bcrypt.hash(this.password, salt);
     next();
 });
+
+//băm hash password
 userSchema.methods.isPasswordMatched = async function (enteredPassword) {
+    //compare password + hash salt
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
