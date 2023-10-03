@@ -17,14 +17,10 @@ router.put("/password", [authMiddleware], ctrlc.updatePassword);
 router.post("/login", ctrlc.loginUserCtrl);
 router.post("/admin-login", ctrlc.loginAdmin);
 // router.post("/cart/apply-coupon", [authMiddleware], ctrlc.applyCoupon);
-// router.post("/cart/cash-order", [authMiddleware], ctrlc.createOrder);
+router.post("/cart/create-order", [authMiddleware], ctrlc.createOrder);
 router.post("/cart", [authMiddleware], ctrlc.userCart);
-router.post("/order/checkout", [authMiddleware], checkout);
-router.post(
-    "/order/paymentVerification",
-    [authMiddleware],
-    paymentVerification
-);
+router.post("/order/checkout", authMiddleware, checkout);
+router.post("/order/paymentVerification", authMiddleware, paymentVerification);
 
 router.get("/all-users", ctrlc.getallUser);
 // router.get("/get-orders", [authMiddleware], ctrlc.getOrders);
