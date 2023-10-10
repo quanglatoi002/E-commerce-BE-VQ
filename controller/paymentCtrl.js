@@ -8,7 +8,7 @@ const instance = new Razarpay({
 const checkout = async (req, res) => {
     const { amount } = req.body;
     const option = {
-        amount: amount * 100,
+        amount: amount * 100 + 5,
         currency: "INR",
         receipt: "receipt_order_74394",
     };

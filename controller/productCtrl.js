@@ -64,6 +64,7 @@ const getAllProduct = asyncHandler(async (req, res) => {
         //filtering
         const queryObj = { ...req.query };
         const excludeFields = ["page", "sort", "limit", "fields"];
+        console.log(queryObj);
         excludeFields.forEach((e) => delete queryObj[e]);
         //chuyển sang JSON để phù hợp với $gte
         let queryStr = JSON.stringify(queryObj);
@@ -71,6 +72,8 @@ const getAllProduct = asyncHandler(async (req, res) => {
             /\b(gte|gt|lte|lt)\b/g,
             (match) => `$${match}`
         );
+
+        console.log(queryStr);
 
         let query = Product.find(JSON.parse(queryStr));
 
@@ -147,7 +150,9 @@ const ratings = asyncHandler(async (req, res) => {
 
     try {
         const product = await Product.findById(prodId);
-        const alreadyRated = product?.ratings?.includes(_id);
+        let alreadyRated = product.ratings.find(
+            (userId) => userId?.postedBy.toString() === _id.toString()
+        );
         //update star & cm
         //$elemMatch đc sử dụng để tìm các tài liệu trong 1 mảng sao cho 1 || nhiều điều kiện được xác định, thường dùng như mảng các đối tượng hoặc mảng các giá trị
         if (alreadyRated) {

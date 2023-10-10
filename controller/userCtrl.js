@@ -278,7 +278,7 @@ const updatePassword = asyncHandler(async (req, res) => {
 
 const forgotPasswordToken = asyncHandler(async (req, res) => {
     // nhận email khi user change password
-    const { email } = req.query;
+    const { email } = req.body;
     // nếu user not input email then note miss email
     if (!email) throw new Error("Missing email");
     // có email thì tìm trg db email đó
@@ -290,7 +290,7 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
         //nếu tự định nghĩa 1 method trong module thì ph save() lại vì dữ liệu trg đối tượng user đã thay đổi nhưng ch lưu lại vào cơ sở dữ liệu
         await user.save();
 
-        const html = `Xin vui lòng click vào link dưới đây để thay đổi mật khẩu của bạn! Link này sẽ hết hạn trong 10 phút kể từ bây giờ <a href=${process.env.URL_SERVER}/api/user/reset-password/${resetToken}>Click here</a>`;
+        const html = `Xin vui lòng click vào link dưới đây để thay đổi mật khẩu của bạn! Link này sẽ hết hạn trong 10 phút kể từ bây giờ <a href=${process.env.URL_CLIENT}/reset-password/${resetToken}>Click here</a>`;
         console.log(html);
         const data = {
             email,
@@ -415,6 +415,8 @@ const createOrder = asyncHandler(async (req, res) => {
         paymentInfo,
     } = req.body;
     const { _id } = req.user;
+    validateMongoDbId(_id);
+
     try {
         const order = await Order.create({
             shippingInfo,
@@ -433,172 +435,144 @@ const createOrder = asyncHandler(async (req, res) => {
     }
 });
 
-//remove Cart
-// const emptyCart = asyncHandler(async (req, res) => {
-//     const { _id } = req.user;
-//     validateMongoDbId(_id);
-//     try {
-//         // const user = await User.findOne(_id);
-//         const cart = await Cart.findOneAndRemove({ orderBy: _id });
-//         res.json(cart);
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// });
+const getMyOrders = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    validateMongoDbId(_id);
 
-// //áp dụng Coupon
-// const applyCoupon = asyncHandler(async (req, res) => {
-//     const { _id } = req.user;
-//     validateMongoDbId(_id);
-//     const { coupon } = req.body;
-//     try {
-//         //tìm kiếm xem user có phiếu bán hàng ko?
-//         const validCoupon = await Coupon.findOne({ name: coupon });
-//         if (validCoupon === null) throw new Error("Coupon not found");
-//         const user = await User.findOne(_id);
-//         //lấy info giỏ hàng và info product đã thêm vào giỏ hàng
-//         let { cartTotal } = await Cart.findOne({
-//             orderBy: user._id,
-//         }).populate("products.product");
-//         // giá tiền sau khi áp dụng discount
-//         // tổng - (tổng * phiếu giảm) / 100 và làm tròn sau dấu . 2 số
-//         let totalAfterDiscount = (
-//             cartTotal -
-//             (cartTotal * validCoupon.discount) / 100
-//         ).toFixed(2);
-//         // cập nhật totalAfterDiscount vào Cart
-//         await Cart.findOneAndUpdate({ orderBy: user._id }, totalAfterDiscount, {
-//             new: true,
-//         });
-//         res.json(totalAfterDiscount);
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// });
+    try {
+        const orders = await Order.find({ user: _id });
+        res.json({ orders });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
 
-// //Sau khi đã thêm vào giỏ hàng và áp dụng phiếu mua hàng thì sẽ đến bước đặt hàng(order)
-// const createOrder = asyncHandler(async (req, res) => {
-//     // xác định phương thức đặt hàng và đã áp dụng giảm giá
-//     const { COD, couponApplied } = req.body;
-//     const { _id } = req.user;
-//     validateMongoDbId(_id);
-//     try {
-//         if (!COD) throw new Error("Create cash order failed");
-//         const user = await User.findById(_id);
-//         let userCart = await Cart.findOne({ orderBy: user._id });
-//         // số tiền cuối cùng mà user phải trả
-//         let finalAmount = 0;
-//         //nếu đã áp dụng phiếu mua hàng thì lấy totalAfterDiscount ở Cart và gán vào finalAmount
-//         if (couponApplied && userCart?.totalAfterDiscount) {
-//             finalAmount = userCart.totalAfterDiscount;
-//         } else {
-//             //nếu như ko áp dụng thì chỉ lấy cartTotal
-//             finalAmount = userCart.cartTotal;
-//         }
-//         //cập nhật lên Order
-//         let newOrder = await new Order({
-//             products: userCart.products,
-//             paymentIntent: {
-//                 id: uniqid(),
-//                 method: "COD",
-//                 amount: finalAmount,
-//                 status: "Cash on Delivery",
-//                 created: Date.now(),
-//                 currency: "usd",
-//             },
-//             orderBy: user._id,
-//             orderStatus: "Cash on Delivery",
-//         }).save();
-//         //sau khi đã đặt hàng thì phải cập nhật lại số lượng của sản phẩm
-//         let update = userCart?.products.map((item) => {
-//             return {
-//                 updateOne: {
-//                     filter: { _id: item.product._id },
-//                     update: {
-//                         $inc: { quantity: -item.count, sold: +item.count },
-//                     },
-//                 },
-//             };
-//         });
-//         // sử dụng bulkWrite cập nhật đồng loạt nhiều thay đổi trong cùng 1 lúc.
-//         const updated = await Product.bulkWrite(update);
-//         res.json({ message: "success", updated });
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// });
+const getAllOrders = asyncHandler(async (req, res) => {
+    try {
+        const orders = await Order.find().populate("user");
+        res.json({ orders });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
 
-// const getOrders = asyncHandler(async (req, res) => {
-//     const { _id } = req.user;
-//     validateMongoDbId(_id);
-//     try {
-//         const userOrders = await Order.findOne({ orderBy: _id })
-//             .populate("products.product")
-//             .populate("orderBy")
-//             .exec();
-//         res.json(userOrders);
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// });
+const getSingleOrders = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    validateMongoDbId(_id);
 
-// const getAllOrders = asyncHandler(async (req, res) => {
-//     try {
-//         const userALLOrders = await Order.find()
-//             .populate("products.product")
-//             .populate("orderBy")
-//             .exec();
-//         res.json(userALLOrders);
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// });
+    try {
+        const orders = await Order.findOne({ _id: id })
+            .populate("orderItems.product")
+            .populate("orderItems.color");
+        res.json({ orders });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
 
-// const getOrderByUserId = asyncHandler(async (req, res) => {
-//     const { id } = req.params;
-//     validateMongoDbId(id);
-//     try {
-//         const userOrders = await Order.findOne({ orderBy: id })
-//             .populate("products.product")
-//             .populate("orderBy")
-//             .exec();
-//         res.json(userOrders);
-//         console.log(userOrders);
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// });
-// //update lại trạng thái khi ng dùng nhận hàng...
-// const updateOrderStatus = asyncHandler(async (req, res) => {
-//     const { status } = req.body;
-//     const { id } = req.params;
-//     validateMongoDbId(id);
-//     const validStatusValues = [
-//         "Not Processed",
-//         "Cash on Delivery",
-//         "Processing",
-//         "Dispatched",
-//         "Cancelled",
-//         "Delivered",
-//     ];
-//     if (!validStatusValues.includes(status))
-//         throw new Error("Invalid order status");
-//     try {
-//         const updateOrderStatus = await Order.findByIdAndUpdate(
-//             id,
-//             {
-//                 orderStatus: status,
-//                 paymentIntent: {
-//                     status: status,
-//                 },
-//             },
-//             { new: true }
-//         );
-//         res.json(updateOrderStatus);
-//     } catch (error) {
-//         throw new Error(error);
-//     }
-// });
+const updateOrder = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    validateMongoDbId(id);
+
+    try {
+        const orders = await Order.findById(id);
+        orders.orderStatus = req.body.orderStatus;
+        await orders.save();
+        res.json({ orders });
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+const getMontWiseOrderIncome = asyncHandler(async (req, res) => {
+    var mL = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ];
+    let d = new Date();
+    let endDate = "";
+    d.setDate(1);
+    for (let index = 0; index < 11; index++) {
+        d.setMonth(d.getMonth() - 1);
+        endDate = mL[d.getMonth()] + " " + d.getFullYear();
+        console.log(endDate);
+    }
+
+    const data = await Order.aggregate([
+        {
+            $match: {
+                createdAt: {
+                    $lte: new Date(),
+                    $gte: new Date(endDate),
+                },
+            },
+        },
+        {
+            $group: {
+                _id: {
+                    month: "$month",
+                },
+                amount: { $sum: "$totalPriceAfterDiscount" },
+                count: { $sum: 1 },
+            },
+        },
+    ]);
+    res.json(data);
+});
+
+const getYearlyTotalOrders = asyncHandler(async (req, res) => {
+    let mL = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ];
+    let d = new Date();
+    let endDate = "";
+    d.setDate(1);
+    for (let index = 0; index < 11; index++) {
+        d.setMonth(d.getMonth() - 1);
+        endDate = mL[d.getMonth()] + " " + d.getFullYear();
+        console.log(endDate);
+    }
+
+    const data = await Order.aggregate([
+        {
+            $match: {
+                createdAt: {
+                    $lte: new Date(),
+                    $gte: new Date(endDate),
+                },
+            },
+        },
+        {
+            $group: {
+                _id: null,
+                count: { $sum: 1 },
+                amount: { $sum: "$totalPriceAfterDiscount" },
+            },
+        },
+    ]);
+    res.json(data);
+});
 
 module.exports = {
     createUser,
@@ -619,15 +593,13 @@ module.exports = {
     saveAddress,
     userCart,
     getUserCart,
-    // emptyCart,
-    // applyCoupon,
-    // createOrder,
-    // getOrders,
-    // updateOrderStatus,
-    // getAllOrders,
-    // getOrderByUserId,
-    createOrder,
-
     removeProductFromCart,
     updateProductQuantityFromCart,
+    createOrder,
+    getMyOrders,
+    getMontWiseOrderIncome,
+    getYearlyTotalOrders,
+    getAllOrders,
+    getSingleOrders,
+    updateOrder,
 };

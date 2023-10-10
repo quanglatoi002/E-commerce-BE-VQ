@@ -9,22 +9,27 @@ router.post("/forgot-password-token", ctrlc.forgotPasswordToken);
 router.post("/cart/create-order", [authMiddleware], ctrlc.createOrder);
 router.put("/reset-password/:token", ctrlc.resetPassword);
 router.put("/password", [authMiddleware], ctrlc.updatePassword);
-// router.put(
-//     "/order/update-order/:id",
-//     [authMiddleware, isAdmin],
-//     ctrlc.updateOrderStatus
-// );
+
 router.post("/login", ctrlc.loginUserCtrl);
 router.post("/admin-login", ctrlc.loginAdmin);
-// router.post("/cart/apply-coupon", [authMiddleware], ctrlc.applyCoupon);
 router.post("/cart/create-order", [authMiddleware], ctrlc.createOrder);
 router.post("/cart", [authMiddleware], ctrlc.userCart);
+router.get(
+    "/getMonthWiseOrderIncome",
+    [authMiddleware],
+    ctrlc.getMontWiseOrderIncome
+);
+router.get(
+    "/getYearlyTotalOrders",
+    [authMiddleware],
+    ctrlc.getYearlyTotalOrders
+);
 router.post("/order/checkout", authMiddleware, checkout);
 router.post("/order/paymentVerification", authMiddleware, paymentVerification);
 
 router.get("/all-users", ctrlc.getallUser);
-// router.get("/get-orders", [authMiddleware], ctrlc.getOrders);
-// router.get("/getall-orders", [authMiddleware, isAdmin], ctrlc.getAllOrders);
+router.get("/get-myorders", [authMiddleware], ctrlc.getMyOrders);
+router.get("/getall-orders", [authMiddleware], ctrlc.getAllOrders);
 
 router.get("/refresh", ctrlc.handleRefreshToken);
 router.get("/logout", [authMiddleware], ctrlc.logout);
@@ -36,7 +41,8 @@ router.put("/save-address", [authMiddleware], ctrlc.saveAddress);
 router.put("/edit-user", [authMiddleware], ctrlc.updateaUser);
 
 router.get("/:id", [authMiddleware, isAdmin], ctrlc.getaUser);
-// router.post("/getorderbyuser/:id", ctrlc.getOrderByUserId);
+router.get("/getAOrder/:id", [authMiddleware, isAdmin], ctrlc.getSingleOrders);
+router.put("/updateOrder/:id", [authMiddleware, isAdmin], ctrlc.updateOrder);
 router.delete("/:id", ctrlc.deleteaUser);
 router.delete(
     "/delete-product-cart/:cartItemId",
