@@ -383,7 +383,16 @@ const removeProductFromCart = asyncHandler(async (req, res) => {
             userId: _id,
             _id: cartItemId,
         });
-        res.json(deleteCart);
+        console.log(res.json({ deletedProductId: cartItemId }));
+        if (deleteCart.deletedCount === 1) {
+            // Trả về thông tin của sản phẩm đã xóa
+            res.json({ deletedProductId: cartItemId });
+        } else {
+            // Trường hợp không tìm thấy hoặc xóa không thành công
+            res.status(404).json({
+                message: "Product not found or deletion failed",
+            });
+        }
     } catch (error) {
         throw new Error(error);
     }
@@ -408,23 +417,24 @@ const updateProductQuantityFromCart = asyncHandler(async (req, res) => {
 
 const createOrder = asyncHandler(async (req, res) => {
     const {
-        shippingInfo,
-        orderItems,
+        shoppingInfo,
+        cartProductState,
         totalPrice,
         totalPriceAfterDiscount,
         paymentInfo,
     } = req.body;
+    console.log(req.body.shoppingInfo);
     const { _id } = req.user;
     validateMongoDbId(_id);
 
     try {
         const order = await Order.create({
-            shippingInfo,
-            orderItems,
+            user: _id,
+            shippingInfo: shoppingInfo,
+            orderItems: cartProductState,
             totalPrice,
             totalPriceAfterDiscount,
             paymentInfo,
-            user: _id,
         });
         res.json({
             order,
