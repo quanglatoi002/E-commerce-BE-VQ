@@ -35,7 +35,7 @@ router.get("/refresh", ctrlc.handleRefreshToken);
 router.get("/logout", [authMiddleware], ctrlc.logout);
 router.get("/wishlist", [authMiddleware], ctrlc.getWishlist);
 router.get("/cart", [authMiddleware], ctrlc.getUserCart);
-// router.delete("/empty-cart", [authMiddleware], ctrlc.emptyCart);
+router.delete("/empty-cart", [authMiddleware], ctrlc.emptyCart);
 
 router.put("/save-address", [authMiddleware], ctrlc.saveAddress);
 router.put("/edit-user", [authMiddleware], ctrlc.updateaUser);

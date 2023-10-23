@@ -8,7 +8,7 @@ const dbConnect = async () => {
             family: 4,
         });
         if (conn.connection.readyState === 1)
-            console.log("DB connection is successfully!");
+            console.log("Mongodb connection is successfully!");
         else console.log("DB connection is failed");
     } catch (error) {
         console.log("DB connection is failed");

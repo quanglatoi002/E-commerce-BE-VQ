@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const dbConnect = require("./config/dbConnect");
+const clientRedis = require("./config/connections_redis");
+
 const app = express();
 const dotenv = require("dotenv").config();
 app.use(cors());

@@ -99,6 +99,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
 //handle refresh token
 const handleRefreshToken = asyncHandler(async (req, res) => {
+    console.log(req.cookies);
     // if expiry token then refresh token(expiry time)
     const cookie = req.cookies;
     if (!cookie?.refreshToken) throw new Error("No Refresh Token In Cookie");
@@ -383,8 +384,7 @@ const removeProductFromCart = asyncHandler(async (req, res) => {
             userId: _id,
             _id: cartItemId,
         });
-        console.log(res.json({ deletedProductId: cartItemId }));
-        if (deleteCart.deletedCount === 1) {
+        if (deleteCart?.deletedCount === 1) {
             // Trả về thông tin của sản phẩm đã xóa
             res.json({ deletedProductId: cartItemId });
         } else {
@@ -393,6 +393,19 @@ const removeProductFromCart = asyncHandler(async (req, res) => {
                 message: "Product not found or deletion failed",
             });
         }
+    } catch (error) {
+        throw new Error(error);
+    }
+});
+
+const emptyCart = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    validateMongoDbId(_id);
+    try {
+        const deleteCart = await Cart.deleteMany({
+            userId: _id,
+        });
+        res.json(deleteCart);
     } catch (error) {
         throw new Error(error);
     }
@@ -450,7 +463,9 @@ const getMyOrders = asyncHandler(async (req, res) => {
     validateMongoDbId(_id);
 
     try {
-        const orders = await Order.find({ user: _id });
+        const orders = await Order.find({ user: _id }).populate(
+            "orderItems.product"
+        );
         res.json({ orders });
     } catch (error) {
         throw new Error(error);
@@ -612,4 +627,5 @@ module.exports = {
     getAllOrders,
     getSingleOrders,
     updateOrder,
+    emptyCart,
 };
