@@ -1,10 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const dbConnect = require("./config/dbConnect");
-const http = require("http");
-const socketIo = require("socket.io");
 const clientRedis = require("./config/connections_redis");
-
+const redis = require("redis");
+const subscriber = redis.createClient();
 const app = express();
 const dotenv = require("dotenv").config();
 app.use(cors());
@@ -20,23 +19,31 @@ const brandRouter = require("./routes/brandRoute");
 const colorRouter = require("./routes/colorRoute");
 const enquiryRouter = require("./routes/enqRoute");
 const updateRouter = require("./routes/uploadRoute");
+const notifiRouter = require("./routes/notifiRoute");
 
 const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
-const server = http.createServer(app);
-const io = socketIo(server);
-
-dbConnect();
-clientRedis.subscribe("notifications");
-clientRedis.on("message", (channel, message) => {
-    socket.emit("notification", JSON.parse(message));
+const httpServer = require("http").createServer(app);
+// cors with socket
+const io = require("socket.io")(httpServer, {
+    cors: {
+        origin: "http://localhost:3000", // Đặt đúng địa chỉ của frontend React
+        methods: ["GET", "POST"],
+    },
 });
+dbConnect();
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+subscriber.subscribe("notifications");
+// Xử lý khi nhận được thông điệp từ kênh đã đăng ký
+subscriber.on("message", function (channel, message) {
+    io.emit("notifications", JSON.parse(message));
+});
 
 app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
@@ -48,8 +55,9 @@ app.use("/api/coupon", couponRouter);
 app.use("/api/color", colorRouter);
 app.use("/api/enquiry", enquiryRouter);
 app.use("/api/upload", updateRouter);
+app.use("/api/send-notification", notifiRouter);
 app.use(notFound);
 app.use(errorHandler);
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`Server is running at PORT ${PORT}`);
 });

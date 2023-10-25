@@ -5,10 +5,6 @@ const client = createClient({
     port: 6379,
 });
 
-client.ping((err, pong) => {
-    console.log(pong);
-});
-
 client.on("ready", () => {
     console.log("Redis to ready");
 });
