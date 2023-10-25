@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const dbConnect = require("./config/dbConnect");
+const http = require("http");
+const socketIo = require("socket.io");
 const clientRedis = require("./config/connections_redis");
 
 const app = express();
@@ -23,8 +25,14 @@ const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
+const server = http.createServer(app);
+const io = socketIo(server);
 
 dbConnect();
+clientRedis.subscribe("notifications");
+clientRedis.on("message", (channel, message) => {
+    socket.emit("notification", JSON.parse(message));
+});
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
