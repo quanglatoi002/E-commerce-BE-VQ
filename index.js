@@ -6,6 +6,8 @@ const redis = require("redis");
 const subscriber = redis.createClient();
 const app = express();
 const dotenv = require("dotenv").config();
+const os = require("os");
+
 app.use(cors());
 
 const PORT = process.env.PORT || 4000;
@@ -33,6 +35,8 @@ const io = require("socket.io")(httpServer, {
         methods: ["GET", "POST"],
     },
 });
+process.env.UV_THREADPOOL_SIZE = os.cpus().length;
+
 dbConnect();
 app.use(morgan("dev"));
 app.use(bodyParser.json());
