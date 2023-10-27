@@ -7,6 +7,22 @@ const subscriber = redis.createClient();
 const app = express();
 const dotenv = require("dotenv").config();
 const os = require("os");
+const compression = require("compression");
+
+// chỉ compression những file trên 100kb
+app.use(
+    compression({
+        // tiêu chuẩn lv6 để ko tăng sức chịu tải của server
+        level: 6,
+        threshold: 100 * 1000,
+        filter: (req, res) => {
+            if (req.headers["x-no-compress"]) {
+                return false;
+            }
+            return compression.filter(req, res);
+        },
+    })
+);
 
 app.use(cors());
 
@@ -48,7 +64,6 @@ subscriber.subscribe("notifications");
 subscriber.on("message", function (channel, message) {
     io.emit("notifications", JSON.parse(message));
 });
-
 app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
 app.use("/api/blog", blogRouter);
