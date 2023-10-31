@@ -27,17 +27,7 @@ app.use(
 app.use(cors());
 
 const PORT = process.env.PORT || 4000;
-const authRouter = require("./routes/authRoute");
-const productRouter = require("./routes/productRoute");
-const blogRouter = require("./routes/blogRoute");
-const couponRouter = require("./routes/couponRoute");
-const categoryRouter = require("./routes/prodCategoryRoute");
-const blogCategoryRouter = require("./routes/blogCategoryRoute");
-const brandRouter = require("./routes/brandRoute");
-const colorRouter = require("./routes/colorRoute");
-const enquiryRouter = require("./routes/enqRoute");
-const updateRouter = require("./routes/uploadRoute");
-const notifiRouter = require("./routes/notifiRoute");
+const initRoutes = require("./routes");
 
 const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
@@ -64,17 +54,9 @@ subscriber.subscribe("notifications");
 subscriber.on("message", function (channel, message) {
     io.emit("notifications", JSON.parse(message));
 });
-app.use("/api/user", authRouter);
-app.use("/api/product", productRouter);
-app.use("/api/blog", blogRouter);
-app.use("/api/category", categoryRouter);
-app.use("/api/blogCategory", blogCategoryRouter);
-app.use("/api/brand", brandRouter);
-app.use("/api/coupon", couponRouter);
-app.use("/api/color", colorRouter);
-app.use("/api/enquiry", enquiryRouter);
-app.use("/api/upload", updateRouter);
-app.use("/api/send-notification", notifiRouter);
+//router
+initRoutes(app);
+
 app.use(notFound);
 app.use(errorHandler);
 httpServer.listen(PORT, () => {
