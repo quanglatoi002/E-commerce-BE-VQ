@@ -1,4 +1,5 @@
 const mongoose = require("mongoose"); // Erase if already required
+const { collection } = require("./userModel");
 
 // Declare the Schema of the Mongo model
 var productSchema = new mongoose.Schema(
@@ -61,8 +62,41 @@ var productSchema = new mongoose.Schema(
             default: 0,
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+    }
 );
 
 //Export the model
 module.exports = mongoose.model("Product", productSchema);
+
+// ví dụ cho trường hợp xây dựng nhiều sản phẩm khác nhau với nhiều trường dữ liệu ko đồng nhất
+
+const product = new mongoose.Schema(
+    {
+        productId: { type: Number, required: true },
+        code: String,
+        name: String,
+        brand: String,
+        description: String,
+        release_data: Date,
+        //cách 1
+        //Nếu bạn cần độ linh hoạt cao và định rõ cấu trúc dữ liệu, cách 1 có thể phù hợp hơn.
+        specs: [
+            {
+                k: String, // Key
+                v: mongoose.Schema.Types.Mixed, // Value (có thể là bất kỳ kiểu dữ liệu nào)
+            },
+        ],
+        //cách 2
+        //Nếu bạn cần độ linh hoạt cao và định rõ cấu trúc dữ liệu, cách 1 có thể phù hợp hơn.
+        specs: {
+            type: Array,
+            default: [],
+        },
+    },
+    {
+        collection: "products",
+        timestamps: true,
+    }
+);
