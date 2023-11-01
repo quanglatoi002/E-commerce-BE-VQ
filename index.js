@@ -43,7 +43,7 @@ const io = require("socket.io")(httpServer, {
 });
 process.env.UV_THREADPOOL_SIZE = os.cpus().length;
 
-dbConnect();
+dbConnect;
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
