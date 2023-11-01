@@ -342,6 +342,7 @@ const getWishlist = asyncHandler(async (req, res) => {
 
 const userCart = asyncHandler(async (req, res) => {
     const { productId, color, quantity, price } = req.body;
+    console.log("a", req.body);
     //cart nhận giá trị là []
     const { _id } = req.user;
     validateMongoDbId(_id);

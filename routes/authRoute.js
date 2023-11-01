@@ -1,5 +1,6 @@
 const express = require("express");
 const ctrlc = require("../controller/userCtrl");
+const securityNonce = require("../middlewares/securityNonce");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const { checkout, paymentVerification } = require("../controller/paymentCtrl");
 const router = express.Router();
@@ -15,7 +16,11 @@ router.put("/password", [authMiddleware], ctrlc.updatePassword);
 
 router.post("/login", ctrlc.loginUserCtrl);
 router.post("/admin-login", ctrlc.loginAdmin);
-router.post("/cart/create-order", [authMiddleware], ctrlc.createOrder);
+router.post(
+    "/cart/create-order",
+    [authMiddleware, securityNonce],
+    ctrlc.createOrder
+);
 router.post("/cart", [authMiddleware], ctrlc.userCart);
 router.get(
     "/getMonthWiseOrderIncome",
