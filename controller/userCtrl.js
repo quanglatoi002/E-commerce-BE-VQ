@@ -475,6 +475,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
 
 const getAllOrders = asyncHandler(async (req, res) => {
     try {
+        console.log(req.user);
         const orders = await Order.find().populate("user");
         res.json({ orders });
     } catch (error) {
@@ -484,7 +485,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
 
 const getSingleOrders = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    validateMongoDbId(_id);
+    validateMongoDbId(id);
 
     try {
         const orders = await Order.findOne({ _id: id })

@@ -3,6 +3,7 @@ const User = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
 const validateMongoDbId = require("../utils/validateMongodbId");
+const DatabaseFacade = require("../utils/patterns");
 
 const createProduct = asyncHandler(async (req, res) => {
     try {
@@ -52,7 +53,7 @@ const getaProduct = asyncHandler(async (req, res) => {
     const { id } = req.params;
     validateMongoDbId(id);
     try {
-        const findProduct = await Product.findById(id).populate("color");
+        const findProduct = await DatabaseFacade.getProductById(id);
         res.json(findProduct);
     } catch (error) {
         throw new Error(error);
