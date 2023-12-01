@@ -1,6 +1,7 @@
 "use strict";
 
 const { Client, GatewayIntentBits } = require("discord.js");
+const { parseInt } = require("lodash");
 
 const { TOKEN_DISCORD, CHANNELID_DISCORD } = process.env;
 class LoggerService {

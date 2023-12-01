@@ -8,7 +8,14 @@ const app = express();
 const dotenv = require("dotenv").config();
 const os = require("os");
 const compression = require("compression");
+const PORT = process.env.PORT || 4000;
+const initRoutes = require("./routes");
+const bodyParser = require("body-parser");
+const { notFound, errorHandler } = require("./middlewares/errorHandler");
+const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
 
+app.use(cors());
 // chỉ compression những file trên 100kb
 app.use(
     compression({
@@ -24,15 +31,6 @@ app.use(
     })
 );
 
-app.use(cors());
-
-const PORT = process.env.PORT || 4000;
-const initRoutes = require("./routes");
-
-const bodyParser = require("body-parser");
-const { notFound, errorHandler } = require("./middlewares/errorHandler");
-const cookieParser = require("cookie-parser");
-const morgan = require("morgan");
 const httpServer = require("http").createServer(app);
 // cors with socket
 const io = require("socket.io")(httpServer, {

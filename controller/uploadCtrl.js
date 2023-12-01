@@ -1,10 +1,13 @@
 const fs = require("fs");
 const asyncHandler = require("express-async-handler");
 
+const { BadRequestError } = require("../core/error.response");
+const { SuccessResponse } = require("../core/success.response");
 const {
     cloudinaryUploadImg,
     cloudinaryDeleteImg,
 } = require("../utils/cloudinary");
+const updateImageFromLocalS3 = require("../services/upload.service");
 const uploadImages = asyncHandler(async (req, res) => {
     try {
         const uploader = (path) => cloudinaryUploadImg(path, "images");
@@ -35,7 +38,21 @@ const deleteImages = asyncHandler(async (req, res) => {
     }
 });
 
+const uploadImageFromLocalS3 = asyncHandler(async (req, res) => {
+    const { file } = req;
+    // console.log(req.file);
+    console.log(file);
+    if (!file) {
+        throw new BadRequestError("File missing");
+    }
+    new SuccessResponse({
+        message: "upload successfully uploaded use S3Client",
+        metadata: await updateImageFromLocalS3({ file }),
+    }).send(res);
+});
+
 module.exports = {
     uploadImages,
     deleteImages,
+    uploadImageFromLocalS3,
 };
