@@ -9,7 +9,9 @@ const {
     uploadPhoto,
     productImgResize,
 } = require("../middlewares/uploadImages");
-// const upload = multer({ storage: multer.memoryStorage() });
+const multer = require("multer");
+
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 // router.post(
@@ -19,7 +21,7 @@ const router = express.Router();
 //     productImgResize,
 //     uploadImages
 // );
-router.post("/", uploadPhoto.single("file"), uploadImageFromLocalS3);
+router.post("/", upload.single("file"), uploadImageFromLocalS3);
 
 router.delete("/delete-img/:id", authMiddleware, isAdmin, deleteImages);
 
