@@ -56,10 +56,12 @@ const blogImgResize = async (req, res, next) => {
     next();
 };
 
+const uploadS3 = multer({ storage: multer.memoryStorage() });
+
 const uploadPhoto = multer({
     storage: multerStorage,
     fileFilter: multerFilter,
     limits: { fieldSize: 30000000 },
 });
 
-module.exports = { uploadPhoto, productImgResize, blogImgResize };
+module.exports = { uploadPhoto, productImgResize, blogImgResize, uploadS3 };

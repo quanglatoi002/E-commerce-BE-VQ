@@ -4,7 +4,7 @@ const {
     S3Client,
     PutObjectCommand,
     GetObjectCommand,
-    DeleteBucketCommand,
+    DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
 
 const s3Config = {
@@ -21,5 +21,5 @@ module.exports = {
     s3,
     PutObjectCommand,
     GetObjectCommand,
-    DeleteBucketCommand,
+    DeleteObjectCommand,
 };

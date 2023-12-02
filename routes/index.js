@@ -13,7 +13,8 @@ const bucketRouter = require("./bucketRoute");
 const { pushToLogDiscord } = require("../middlewares/loggers");
 
 const initRoutes = (app) => {
-    // app.use(pushToLogDiscord);
+    app.use(pushToLogDiscord);
+
     app.use("/api/upload", updateRouter);
     app.use("/api/user", authRouter);
     app.use("/api/product", productRouter);
