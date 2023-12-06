@@ -17,4 +17,6 @@ router.post("/", async (req, res) => {
     }
 });
 
+router.get("/", ctrlc.getNotifications);
+
 module.exports = router;

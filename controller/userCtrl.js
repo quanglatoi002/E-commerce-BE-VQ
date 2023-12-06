@@ -11,7 +11,8 @@ const jwt = require("jsonwebtoken");
 const sendMail = require("./emailCtrl");
 const crypto = require("crypto");
 const uniqid = require("uniqid");
-
+const redis = require("redis");
+const redisClient = redis.createClient();
 // *validation client side
 
 //create User
@@ -450,6 +451,20 @@ const createOrder = asyncHandler(async (req, res) => {
             totalPriceAfterDiscount,
             paymentInfo,
         });
+        console.log("order 123", order);
+
+        if (!order) throw new Error("Order not created");
+        // publish để bên admin nhận info
+        redisClient.publish(
+            "newOrder",
+            JSON.stringify({
+                name:
+                    order.shippingInfo.firstName +
+                    " " +
+                    order.shippingInfo.lastName,
+            })
+        );
+
         res.json({
             order,
             success: true,

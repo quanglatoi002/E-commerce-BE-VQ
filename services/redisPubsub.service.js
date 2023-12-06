@@ -26,3 +26,5 @@ class RedisPubSubService {
         });
     }
 }
+
+module.exports = new RedisPubSubService();

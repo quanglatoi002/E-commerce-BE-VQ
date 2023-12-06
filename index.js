@@ -14,8 +14,27 @@ const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
+const http = require("http");
+const socketIo = require("socket.io");
+const server = http.createServer(app);
 
-app.use(cors());
+const corsOptions = {
+    origin: ["http://localhost:3000", "http://localhost:3001"], // Cho phép yêu cầu từ domain này
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Các phương thức được phép
+    credentials: true,
+    // Cho phép truy cập các thông tin đăng nhập từ client
+};
+
+app.use(cors(corsOptions));
+
+const io = socketIo(server, {
+    cors: corsOptions,
+});
+io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
+
+    // Thêm xử lý sự kiện Socket.io nếu cần thiết
+});
 // chỉ compression những file trên 100kb
 app.use(
     compression({
@@ -31,14 +50,6 @@ app.use(
     })
 );
 
-const httpServer = require("http").createServer(app);
-// cors with socket
-const io = require("socket.io")(httpServer, {
-    cors: {
-        origin: "http://localhost:3000", // Đặt đúng địa chỉ của frontend React
-        methods: ["GET", "POST"],
-    },
-});
 process.env.UV_THREADPOOL_SIZE = os.cpus().length;
 
 dbConnect;
@@ -47,16 +58,24 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+subscriber.subscribe("newOrder");
 subscriber.subscribe("notifications");
 // Xử lý khi nhận được thông điệp từ kênh đã đăng ký
 subscriber.on("message", function (channel, message) {
-    io.emit("notifications", JSON.parse(message));
+    console.log(message);
+    if (channel === "notifications") {
+        io.emit("notifications", JSON.parse(message));
+    }
+    if (channel === "newOrder") {
+        // Gửi thông báo đến tất cả các clients
+        io.emit("newOrder", JSON.parse(message));
+    }
 });
 //router
 initRoutes(app);
 
 app.use(notFound);
 app.use(errorHandler);
-httpServer.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running at PORT ${PORT}`);
 });
