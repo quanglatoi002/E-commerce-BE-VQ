@@ -4,9 +4,26 @@ const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
 const validateMongoDbId = require("../utils/validateMongodbId");
 const DatabaseFacade = require("../utils/patterns");
+const Size = require("../models/SizeModel");
 
 const createProduct = asyncHandler(async (req, res) => {
     try {
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res
+                .status(400)
+                .json({ message: "Bad Request - Empty data" });
+        }
+        // check seen a data size send?
+        if (req.body.sizes && req.body.sizes.length > 0) {
+            // có thể sẽ có 3 loại size S M L XL ...
+            const newSizes = await Promise.all(
+                req.body.sizes.map((sizeData) => Size.create(sizeData))
+            );
+
+            // add newSizes vào product
+            req.body.sizes = newSizes.map((size) => size._id);
+        }
+
         if (req.body.title) {
             req.body.slug = slugify(req.body.title);
         }
