@@ -430,6 +430,26 @@ const updateProductQuantityFromCart = asyncHandler(async (req, res) => {
     }
 });
 
+async function handleSuccessfulOrder(orderId) {
+    try {
+        const order = await Order.findById(orderId);
+
+        // Lặp qua từng sản phẩm trong đơn hàng và giảm số lượng từ tồn kho
+        for (const product of order.orderItems) {
+            await Product.findByIdAndUpdate(
+                product.product, // Giả sử có một trường product chứa ID của sản phẩm
+                { $inc: { quantity: -product.quantity } },
+                { new: true }
+            );
+        }
+
+        console.log("Cập nhật số lượng sản phẩm thành công.");
+    } catch (error) {
+        console.error("Lỗi khi cập nhật số lượng sản phẩm:", error);
+        throw new Error(error);
+    }
+}
+
 const createOrder = asyncHandler(async (req, res) => {
     const {
         shoppingInfo,
@@ -451,9 +471,13 @@ const createOrder = asyncHandler(async (req, res) => {
             totalPriceAfterDiscount,
             paymentInfo,
         });
+
         console.log("order 123", order);
 
         if (!order) throw new Error("Order not created");
+
+        //giảm số lượng product
+        await handleSuccessfulOrder(order._id);
         // publish để bên admin nhận info
         redisClient.publish(
             "newOrder",
