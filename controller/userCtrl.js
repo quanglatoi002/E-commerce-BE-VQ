@@ -438,7 +438,12 @@ async function handleSuccessfulOrder(orderId) {
         for (const product of order.orderItems) {
             await Product.findByIdAndUpdate(
                 product.product, // Giả sử có một trường product chứa ID của sản phẩm
-                { $inc: { quantity: -product.quantity } },
+                {
+                    $inc: {
+                        quantity: -product.quantity,
+                        sold: +product.quantity,
+                    },
+                },
                 { new: true }
             );
         }
