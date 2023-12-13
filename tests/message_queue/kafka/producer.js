@@ -1,8 +1,9 @@
-const { Kafka } = require("kafkajs");
+const { Kafka, logLevel } = require("kafkajs");
 
 const kafka = new Kafka({
     clientId: "my-app",
     brokers: ["localhost:9092"],
+    logLevel: logLevel.NOTHING
 });
 
 const producer = kafka.producer();
@@ -10,7 +11,7 @@ const producer = kafka.producer();
 const runProducer = async () => {
     await producer.connect();
     await producer.send({
-        topic: "test-topic-0",
+        topic: "test-topic",
         messages: [{ value: "Hello KafkaJS user!" }],
     });
     await producer.disconnect();

@@ -1,8 +1,9 @@
-const { Kafka } = require("kafkajs");
+const { Kafka, logLevel } = require("kafkajs");
 
 const kafka = new Kafka({
     clientId: "my-app",
     brokers: ["localhost:9092"],
+    logLevel: logLevel.NOTHING,
 });
 
 const consumer = kafka.consumer({ groupId: "test-group" });
@@ -10,7 +11,7 @@ const consumer = kafka.consumer({ groupId: "test-group" });
 const runConsumer = async () => {
     await consumer.connect();
     await consumer.subscribe({
-        topic: "test-topic-0",
+        topic: "test-topic",
         fromBeginning: true,
     });
 
