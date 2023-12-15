@@ -10,17 +10,14 @@ const {
 
 router.post("/register", ctrlc.createUser);
 router.post("/forgot-password-token", ctrlc.forgotPasswordToken);
-router.post("/cart/create-order", [authMiddleware], ctrlc.createOrder);
+// router.post("/cart/create-order", [authMiddleware], ctrlc.createOrder);
+
 router.put("/reset-password/:token", ctrlc.resetPassword);
 router.put("/password", [authMiddleware], ctrlc.updatePassword);
 
 router.post("/login", ctrlc.loginUserCtrl);
 router.post("/admin-login", ctrlc.loginAdmin);
-router.post(
-    "/cart/create-order",
-    [authMiddleware, securityNonce],
-    ctrlc.createOrder
-);
+router.post("/cart/create-order", [authMiddleware], ctrlc.createOrder);
 router.post("/cart", [authMiddleware], ctrlc.userCart);
 router.get(
     "/getMonthWiseOrderIncome",

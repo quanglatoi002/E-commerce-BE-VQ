@@ -17,7 +17,7 @@ const securityNonce = async (req, res, next) => {
     // time hiện tại - time nhận được mà > time cho phép nó hoạt động thì err
     if (
         existingNonce ||
-        Math.abs(currentTime - receivedTimestamp) > allowedTimeDifference
+        Math.abs(currentTime - receivedTimestamp) > allowedTime
     ) {
         return res.status(401).json({ error: "Unauthorized" });
     }

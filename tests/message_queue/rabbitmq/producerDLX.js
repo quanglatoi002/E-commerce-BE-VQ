@@ -1,6 +1,11 @@
 const amqp = require("amqplib");
 const messages = "hello";
 
+// const log = console.log;
+// console.log = function () {
+//     log.apply(console, [new Date()].concat(arguments));
+// };
+
 const runProducer = async () => {
     try {
         const connection = await amqp.connect("amqp://guest:12345@localhost");
@@ -15,6 +20,7 @@ const runProducer = async () => {
         const notificationRoutingDLX = "notificationRoutingKeyDLX";
 
         // create exchange
+        //các notifi sẽ ko bị mất khi đóng kết nối
         await channel.assertExchange(notificationExchange, "direct", {
             durable: true,
         });
@@ -35,7 +41,7 @@ const runProducer = async () => {
         const msg = "a new product";
         console.log(`producer msg::`, msg);
         await channel.sendToQueue(queueResult.queue, Buffer.from(msg), {
-            expiration: "100000",
+            expiration: "10000",
         });
 
         setTimeout(() => {

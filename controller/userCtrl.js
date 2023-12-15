@@ -12,6 +12,7 @@ const sendMail = require("./emailCtrl");
 const crypto = require("crypto");
 const uniqid = require("uniqid");
 const redis = require("redis");
+const sendMessageToQueue = require("../tests/message_queue/rabbitmq/ordered.producer");
 const redisClient = redis.createClient();
 // *validation client side
 
@@ -468,18 +469,19 @@ const createOrder = asyncHandler(async (req, res) => {
     validateMongoDbId(_id);
 
     try {
-        const order = await Order.create({
+        const infoOrder = {
             user: _id,
             shippingInfo: shoppingInfo,
             orderItems: cartProductState,
             totalPrice,
             totalPriceAfterDiscount,
             paymentInfo,
-        });
+        };
 
+        await sendMessageToQueue(infoOrder);
         console.log("order 123", order);
 
-        if (!order) throw new Error("Order not created");
+        if (!infoOrder) throw new Error("Order not created");
 
         //giảm số lượng product
         await handleSuccessfulOrder(order._id);
@@ -488,14 +490,14 @@ const createOrder = asyncHandler(async (req, res) => {
             "newOrder",
             JSON.stringify({
                 name:
-                    order.shippingInfo.firstName +
+                    infoOrder.shippingInfo.firstName +
                     " " +
-                    order.shippingInfo.lastName,
+                    infoOrder.shippingInfo.lastName,
             })
         );
 
         res.json({
-            order,
+            infoOrder,
             success: true,
         });
     } catch (error) {
